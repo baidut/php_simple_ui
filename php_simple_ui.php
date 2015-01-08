@@ -124,7 +124,9 @@ class ui_JMPage extends ui_Dom{
 //   </div>
 
 // </div>
-	private $content;
+	public $content;
+	public $header;
+	public $footer;
 	function __construct($title='',$data) {
         parent::__construct();
         $this->attr('data-role','page');
@@ -132,9 +134,9 @@ class ui_JMPage extends ui_Dom{
         // $this->content = new ui_Dom('div',attr('data-role',"content")); 
         if($title!=''){
         	$this->id = $title;
-        	$header = new ui_Dom('div');
-        	$header->attr('data-role','header')->text("<h1>$title</h1>");
-        	$this->append($header);
+        	$this->header = new ui_Dom('div');
+        	$this->header->attr('data-role','header')->text("<h1>$title</h1>");
+        	$this->append($this->header);
         }
         $this->content = new ui_Dom('div');
         $this->content->attr('data-role','content')->text("<h1>$title</h1>");
@@ -146,6 +148,9 @@ class ui_JMPage extends ui_Dom{
     	$this->content->append($node);
     }
 }
+
+// 自动追加计数气泡
+
 class ui_JMListView extends ui_Dom{
 	function __construct($data,$order=false,$data_inset=false) {
         parent::__construct(($order)?'ol':'ul');
@@ -163,7 +168,8 @@ class ui_JMListView extends ui_Dom{
 	// 	$this->appendText('<li data-role="list-divider">'.$title.'</li>');
 	// }
 	function appendList($data,$title=''){
-		if($title)$this->appendText('<li data-role="list-divider">'.$title.'</li>');
+		// 自动追加计数气泡
+		if($title)$this->appendText('<li data-role="list-divider">'.$title.'<span class="ui-li-count">'.count($data).'</span></li>');
 		foreach ($data as $key => $value) { // value可以是一个链接
 			if(is_array($value))$this->appendText('<li>'.$value['link'].'</li>');
 			else $this->appendText('<li>'.$value.'</li>');
@@ -174,6 +180,11 @@ class ui_JMListView extends ui_Dom{
 			$this->appendList($value,$key);
 		}
 		return $this;
+	}
+	// setOption
+	function addFilter($placeholder=''){
+		$this->attr('data-filter','true');
+		if($placeholder!='')$this->attr('data-filter-placeholder',$placeholder);
 	}
 }
 
