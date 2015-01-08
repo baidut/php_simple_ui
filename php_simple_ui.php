@@ -18,10 +18,14 @@ $body->append('input')->attr('type','button')->val('hello world');
 echo $ui;
 */
 
+/*
 $ui = new ui_jQueryMobile();
 echo $ui;
 
 // <html><head><script src="http://code.jquery.com/jquery-1.8.3.min.js"></script><link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css"><script src="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js"></head><body></body></html>
+*/
+
+
 
 class ui_Dom{
     public $attr = array(); // 'value'=>3 关联数组形式
@@ -29,10 +33,8 @@ class ui_Dom{
     private $ele = null;
     private $innertext = '';  // 是否需要识别html标签的能力？可以解析出内容——html_simple_dom 选择性分析比较高效
 
-    function __construct($ele,$content='') {
-        if($ele!='')$this->ele = $ele;
-        else $this->ele = 'div';
-
+    function __construct($ele='div',$content='') {
+        $this->ele = $ele;
         if($content!='')$this->innertext = $content;
     }
 
@@ -55,7 +57,7 @@ class ui_Dom{
 	}
 
 	function append($node,$content=''){
-		$ret = new ui_Dom($node,$content); 
+		$ret = is_string($node)? (new ui_Dom($node,$content) ): $node;
 		array_push($this->children,$ret); 
 		return $ret;
 	}
@@ -65,7 +67,10 @@ class ui_Dom{
 	function text($t){$this->innertext = $t;return $this;}
 	function html($t){}
 	function val($v){$this->attr['value']=$v;return $this;}
-	function attr($name,$value){$this->attr[$name]=$value;return $this;}
+	function attr($name,$value){
+		$this->attr[$name]=$value;
+		return $this;
+	}
 	function __get($name) { return $this->attr[$name]; }
     function __set($name, $value) { $this->attr[$name] = $value; }
 
@@ -86,10 +91,92 @@ class ui_jQuery extends ui_Dom{
 
 class ui_jQueryMobile extends ui_jQuery{
 
-	function __construct() {
+	function __construct($page='') {
         parent::__construct();
         $script = new ui_Dom('script');
         $script->src='';
-        $this->head->appendText('<link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css"><script src="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js">');
+        $this->head->appendText('<link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css"><script src="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js"></script>');
+
+        if($page) $this->body->append($page);
+    }
+    function appendPage($title){
+    	$page = new ui_JMPage($title);
+    	$this->body->append($page);
+    	return $this;
     }
 }
+
+// <a href="#pagetwo" data-rel="dialog">转到页面二</a> 对话框形式打开页面
+
+class ui_JMPage extends ui_Dom{
+// 	<div data-role="page">
+
+//   <div data-role="header">
+//     <h1>欢迎访问我的主页</h1>
+//   </div>
+
+//   <div data-role="content">
+//     <p>我是一名移动开发者！</p>
+//   </div>
+
+//   <div data-role="footer">
+//     <h1>页脚文本</h1>
+//   </div>
+
+// </div>
+	private $content;
+	function __construct($title='',$data) {
+        parent::__construct();
+        $this->attr('data-role','page');
+        // $this->content = new ui_Dom('div',ATTR,'data-role="content">'); 比较麻烦
+        // $this->content = new ui_Dom('div',attr('data-role',"content")); 
+        if($title!=''){
+        	$this->id = $title;
+        	$header = new ui_Dom('div');
+        	$header->attr('data-role','header')->text("<h1>$title</h1>");
+        	$this->append($header);
+        }
+        $this->content = new ui_Dom('div');
+        $this->content->attr('data-role','content')->text("<h1>$title</h1>");
+        $this->append($this->content);
+
+        if($data)$this->appendContent($data);
+    }
+    function appendContent($node){
+    	$this->content->append($node);
+    }
+}
+class ui_JMListView extends ui_Dom{
+	function __construct($data,$order=false,$data_inset=false) {
+        parent::__construct(($order)?'ol':'ul');
+        $this->attr('data-role','listview');
+        $this->attr('data-inset',$data_inset?'true':'false');
+        $this->appendData($data);
+        // if($id!='')$this->attr('id',$id);
+    }
+    // 数据可视化 $array 转为 list
+	// 将数据装入ui容器中
+    // function appendItem($title,$link=''){
+	// 	$this->appendText('<li><a href="'.($link)?$link:'#'.'">'.$title.'</a></li>');
+	// }
+	// function appendDivider($title){
+	// 	$this->appendText('<li data-role="list-divider">'.$title.'</li>');
+	// }
+	function appendList($data,$title=''){
+		if($title)$this->appendText('<li data-role="list-divider">'.$title.'</li>');
+		foreach ($data as $key => $value) { // value可以是一个链接
+			if(is_array($value))$this->appendText('<li>'.$value['link'].'</li>');
+			else $this->appendText('<li>'.$value.'</li>');
+		}
+	}
+	function appendData($data,$title=''){
+		foreach ($data as $key => $value) {
+			$this->appendList($value,$key);
+		}
+		return $this;
+	}
+}
+
+
+
+
